@@ -27,7 +27,7 @@ jobs:
     # This is the custom step to check the cache result.
     # It now correctly references the output from the setup-node step.
     - name: prime-cache-8fff81e
-      run: echo "The cache prime was successful. Cache hit result: ${{ steps.setup-node-with-cache.outputs.cache-hit }}"
+      run: echo "The cache prime was successful."
 
     # This step runs 'npm install' ONLY if the cache was a miss.
     - name: Install Dependencies if cache missed
