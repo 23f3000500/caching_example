@@ -1,9 +1,8 @@
-name: CI with Dependency Caching
+name: CI with Dependency Caching (Corrected)
 
 on:
   push:
     branches: [ main ]
-  # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
 jobs:
@@ -14,28 +13,25 @@ jobs:
     - name: Checkout repository code
       uses: actions/checkout@v4
 
-    - name: Set up Node.js
+    # Corrected and simplified caching method
+    # The `setup-node` action handles caching natively.
+    # It automatically creates a smart cache key based on the lock file.
+    - name: Set up Node.js and cache dependencies
+      id: setup-node-with-cache # Give this step an ID to check its output
       uses: actions/setup-node@v4
       with:
         node-version: '20'
+        # This one line enables caching for npm
+        cache: 'npm' 
 
-    - name: Cache npm dependencies
-      id: cache-npm-deps # Give the step an ID to reference its output
-      uses: actions/cache@v4
-      with:
-        # The path to the directory to be cached (npm dependencies)
-        path: ~/.npm 
-        # The specific key for this cache
-        key: cache-8fff81e
-
-    # This is the custom step you requested to check the cache result
+    # This is the custom step to check the cache result.
+    # It now correctly references the output from the setup-node step.
     - name: prime-cache-8fff81e
-      run: echo "The cache prime was successful. Cache hit result: ${{ steps.cache-npm-deps.outputs.cache-hit }}"
+      run: echo "The cache prime was successful. Cache hit result: ${{ steps.setup-node-with-cache.outputs.cache-hit }}"
 
-    # This step runs 'npm install' ONLY if the cache was not restored.
-    # On the first run, this will execute. On subsequent runs, it will be skipped.
+    # This step runs 'npm install' ONLY if the cache was a miss.
     - name: Install Dependencies if cache missed
-      if: steps.cache-npm-deps.outputs.cache-hit != 'true'
+      if: steps.setup-node-with-cache.outputs.cache-hit != 'true'
       run: npm install
 
     - name: Run a command that uses dependencies
