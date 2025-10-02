@@ -1,0 +1,42 @@
+name: CI with Dependency Caching
+
+on:
+  push:
+    branches: [ main ]
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  build-with-caching:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository code
+      uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Cache npm dependencies
+      id: cache-npm-deps # Give the step an ID to reference its output
+      uses: actions/cache@v4
+      with:
+        # The path to the directory to be cached (npm dependencies)
+        path: ~/.npm 
+        # The specific key for this cache
+        key: cache-8fff81e
+
+    # This is the custom step you requested to check the cache result
+    - name: prime-cache-8fff81e
+      run: echo "The cache prime was successful. Cache hit result: ${{ steps.cache-npm-deps.outputs.cache-hit }}"
+
+    # This step runs 'npm install' ONLY if the cache was not restored.
+    # On the first run, this will execute. On subsequent runs, it will be skipped.
+    - name: Install Dependencies if cache missed
+      if: steps.cache-npm-deps.outputs.cache-hit != 'true'
+      run: npm install
+
+    - name: Run a command that uses dependencies
+      run: echo "Dependencies are installed and ready to be used by build or test commands."
