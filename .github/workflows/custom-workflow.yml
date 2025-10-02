@@ -1,4 +1,4 @@
-name: CI with Dependency Caching (Corrected)
+name: CI using actions-cache v4
 
 on:
   push:
@@ -6,33 +6,38 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-with-caching:
+  build-with-explicit-cache:
     runs-on: ubuntu-latest
 
     steps:
     - name: Checkout repository code
       uses: actions/checkout@v4
 
-    # Corrected and simplified caching method
-    # The `setup-node` action handles caching natively.
-    # It automatically creates a smart cache key based on the lock file.
-    - name: Set up Node.js and cache dependencies
-      id: setup-node-with-cache # Give this step an ID to check its output
+    - name: Set up Node.js
       uses: actions/setup-node@v4
       with:
         node-version: '20'
-        # This one line enables caching for npm
-        cache: 'npm' 
+
+    # This step uses actions/cache@v4 to cache the 'node_modules' directory.
+    # The key is set to the static value you provided.
+    - name: Cache node modules
+      id: cache-node-modules # An ID to reference the cache-hit output
+      uses: actions/cache@v4
+      with:
+        # This is the crucial change: we cache the installed dependencies folder.
+        path: node_modules
+        # The specific key for this cache, as you requested.
+        key: cache-8fff81e
 
     # This is the custom step to check the cache result.
-    # It now correctly references the output from the setup-node step.
     - name: prime-cache-8fff81e
-      run: echo "The cache prime was successful."
+      run: echo "Cache hit result"
 
-    # This step runs 'npm install' ONLY if the cache was a miss.
+    # This step runs 'npm ci' ONLY if the cache was not restored ('cache-miss').
+    # Using 'npm ci' is faster and safer for CI than 'npm install'.
     - name: Install Dependencies if cache missed
-      if: steps.setup-node-with-cache.outputs.cache-hit != 'true'
-      run: npm install
+      if: steps.cache-node-modules.outputs.cache-hit != 'true'
+      run: npm ci
 
-    - name: Run a command that uses dependencies
-      run: echo "Dependencies are installed and ready to be used by build or test commands."
+    - name: Build or Test commands would run here
+      run: echo "Dependencies are ready. Running build/test steps..."
