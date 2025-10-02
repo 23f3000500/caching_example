@@ -1,4 +1,4 @@
-name: CI using actions-cache v4
+name: Cache Test Workflow
 
 on:
   push:
@@ -6,38 +6,19 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-with-explicit-cache:
+  cache-job:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository code
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Set up Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
+      - name: Cache dependencies
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/example-deps
+          key: cache-8fff81e
 
-    # This step uses actions/cache@v4 to cache the 'node_modules' directory.
-    # The key is set to the static value you provided.
-    - name: Cache node modules
-      id: cache-node-modules # An ID to reference the cache-hit output
-      uses: actions/cache@v4
-      with:
-        # This is the crucial change: we cache the installed dependencies folder.
-        path: node_modules
-        # The specific key for this cache, as you requested.
-        key: cache-8fff81e
-
-    # This is the custom step to check the cache result.
-    - name: prime-cache-8fff81e
-      run: echo "Cache hit result"
-
-    # This step runs 'npm ci' ONLY if the cache was not restored ('cache-miss').
-    # Using 'npm ci' is faster and safer for CI than 'npm install'.
-    - name: Install Dependencies if cache missed
-      if: steps.cache-node-modules.outputs.cache-hit != 'true'
-      run: npm ci
-
-    - name: Build or Test commands would run here
-      run: echo "Dependencies are ready. Running build/test steps..."
+      - name: prime-cache-8fff81e
+        run: echo "Cache result:${{ steps.cache.outputs.cache-hit }}"
